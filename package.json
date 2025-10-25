@@ -1,0 +1,15 @@
+{
+  "name": "mental-health-app",
+  "version": "1.0.0",
+  "description": "Mental Health Support Application with React frontend and Express backend",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "start": "node backend/server.js",
+    "build": "npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}
