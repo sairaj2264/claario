@@ -1,19 +1,21 @@
 import React, { useState } from 'react'
-import { supabase } from './supabaseClient'
+import { useNavigate } from 'react-router-dom'
+import AuthService from '../services/authService'
 
-const LoginPage = ({ onLoginSuccess }) => {
+const LoginPage = () => {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [message, setMessage] = useState('')
+  const navigate = useNavigate()
 
   const handleOAuthLogin = async (provider) => {
     setLoading(true)
     setMessage('')
     
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await AuthService.signInWithOAuth({
         provider: provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
@@ -38,25 +40,19 @@ const LoginPage = ({ onLoginSuccess }) => {
     
     try {
       if (isSignUp) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password
-        })
+        const { data, error } = await AuthService.signUp(email, password)
         
         if (error) throw error
         
         setMessage('Signup successful! Please check your email for confirmation.')
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
+        const { data, error } = await AuthService.login(email, password)
         
         if (error) throw error
         
         // Send user data to backend
         await sendUserToBackend(data.user)
-        onLoginSuccess(data.user)
+        navigate('/dashboard')
       }
     } catch (error) {
       setMessage(`Error: ${error.message}`)

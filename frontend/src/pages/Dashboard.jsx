@@ -1,6 +1,15 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import AuthService from '../services/authService'
 
-const Dashboard = ({ user, onLogout }) => {
+const Dashboard = ({ user }) => {
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    await AuthService.logout()
+    navigate('/')
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -16,7 +25,7 @@ const Dashboard = ({ user, onLogout }) => {
               </p>
             </div>
             <button
-              onClick={onLogout}
+              onClick={handleLogout}
               className="bg-red-600 text-white rounded-lg py-2 px-4 hover:bg-red-700 transition-colors"
             >
               Logout

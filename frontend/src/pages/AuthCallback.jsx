@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from './supabaseClient'
+import AuthService from '../services/authService'
 
-const AuthCallback = ({ onLoginSuccess }) => {
+const AuthCallback = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
@@ -11,7 +11,7 @@ const AuthCallback = ({ onLoginSuccess }) => {
     const handleAuthCallback = async () => {
       try {
         // Get the session from Supabase URL
-        const { data, error } = await supabase.auth.getSession()
+        const { data, error } = await AuthService.getSession()
         
         if (error) throw error
         
@@ -31,7 +31,6 @@ const AuthCallback = ({ onLoginSuccess }) => {
           
           if (response.ok) {
             console.log('User authenticated:', result.user)
-            onLoginSuccess(data.session.user)
             // Redirect to dashboard or home page
             navigate('/dashboard')
           } else {
@@ -49,7 +48,7 @@ const AuthCallback = ({ onLoginSuccess }) => {
     }
 
     handleAuthCallback()
-  }, [navigate, onLoginSuccess])
+  }, [navigate])
 
   if (loading) {
     return (
