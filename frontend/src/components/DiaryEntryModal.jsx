@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const DiaryEntryModal = ({ 
-  userId, 
-  date, 
-  entry, 
-  isOpen, 
-  onClose, 
-  onSave 
+const DiaryEntryModal = ({
+  userId,
+  userEmail,
+  date,
+  entry,
+  isOpen,
+  onClose,
+  onSave
 }) => {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -62,6 +63,9 @@ const DiaryEntryModal = ({
       setLoading(true)
       setError(null)
       
+      // DEBUGGING: Log what we're about to send
+      console.log('Saving diary entry with userEmail:', userEmail, 'date:', date);
+      
       const diaryData = {
         title: title.trim(),
         content: content.trim(),
@@ -71,13 +75,15 @@ const DiaryEntryModal = ({
       let response
       if (entry && entry.id) {
         // Update existing entry
+        console.log('Updating entry:', entry.id)
         response = await axios.put(`/api/diary/entry/${entry.id}`, {
           ...diaryData,
-          user_id: userId
+          user_id: userEmail  // Use email for backend compatibility
         })
       } else {
-        // Create new entry
-        response = await axios.post(`/api/diary/entry/${userId}/${date}`, diaryData)
+        // Create new entry - use email instead of userId
+        console.log('Creating entry with email:', userEmail)
+        response = await axios.post(`/api/diary/entry/${userEmail}/${date}`, diaryData)
       }
       
       // Notify parent component of successful save
@@ -89,7 +95,25 @@ const DiaryEntryModal = ({
       onClose()
     } catch (err) {
       console.error('Error saving diary entry:', err)
-      setError(err.response?.data?.error || 'Failed to save diary entry')
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to save diary entry'
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (err.response.status === 404) {
+          errorMessage = `API endpoint not found: ${err.response.config?.method?.toUpperCase()} ${err.response.config?.url}`
+        } else if (err.response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.'
+        } else if (err.response.data?.error) {
+          errorMessage = err.response.data.error
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = 'Network error. Please check your connection.'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

@@ -63,7 +63,6 @@ const Dashboard = ({ user }) => {
                 {/* Calendar/Diary */}
                 <div className="group">
                   <button
-                    onClick={() => navigate('/calendar')}
                     className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-xl p-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
                     <div className="text-center">

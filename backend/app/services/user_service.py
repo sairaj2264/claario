@@ -36,6 +36,29 @@ class UserService:
         return user
     
     @staticmethod
+    def get_or_create_user_by_supabase_id(supabase_user_id):
+        """
+        Get or create a user based on their Supabase user ID (email)
+        This bridges the gap between Supabase authentication and local user records
+        """
+        # For now, we'll use the email as the identifier since that's what links Supabase and local users
+        # In a production environment, you might want to store the Supabase ID directly
+        email = supabase_user_id  # Assuming the supabase_user_id is actually the email
+        
+        # Check if user already exists by email
+        user = User.query.filter_by(email=email).first()
+        if user:
+            return user
+            
+        # If user doesn't exist, create a new one with minimal information
+        # In a real implementation, you'd get more details from the Supabase token
+        username = email.split('@')[0] if email else 'user'
+        user = User(username=username, email=email)
+        db.session.add(user)
+        db.session.commit()
+        return user
+    
+    @staticmethod
     def update_user(user_id, username=None, email=None, name=None, gender=None, age=None):
         user = User.query.get(user_id)
         if user:

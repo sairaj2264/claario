@@ -3,7 +3,6 @@ import AuthService from '../services/authService'
 
 export const useAuth = () => {
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -12,8 +11,6 @@ export const useAuth = () => {
         setUser(currentUser)
       } catch (error) {
         console.error('Error checking user:', error)
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -22,7 +19,6 @@ export const useAuth = () => {
     // Listen for auth changes
     const subscription = AuthService.onAuthStateChange((_event, session) => {
       setUser(session?.user || null)
-      setLoading(false)
     })
 
     return () => {
@@ -30,5 +26,5 @@ export const useAuth = () => {
     }
   }, [])
 
-  return { user, loading }
+  return { user }
 }

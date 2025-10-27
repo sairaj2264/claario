@@ -8,23 +8,23 @@ import DiaryEntryModal from '../components/DiaryEntryModal'
 const CalendarPage = ({ user }) => {
   // Check if user is valid
   if (!user || !user.id) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-            <p className="text-gray-700 mb-6">User not available. Please log in again.</p>
-            <button
-              onClick={() => window.location.href = '/'}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Go to Login
-            </button>
-          </div>
+  return (
+    <div className="min-h-screen bg-black py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="bg-gray-900 rounded-xl shadow-lg p-8 text-center border border-gray-700">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
+          <p className="text-gray-300 mb-6">User not available. Please log in again.</p>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Go to Login
+          </button>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
   
   const navigate = useNavigate()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -45,22 +45,59 @@ const CalendarPage = ({ user }) => {
   const fetchCalendarData = async () => {
     try {
       setLoading(true)
+      setError(null)
+      
       // Check if user is valid before making the request
-      if (!user || !user.id) {
+      if (!user || !user.id || !user.email) {
         throw new Error('User not available');
       }
       
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth() + 1 // JavaScript months are 0-indexed
       
-      // Replace with your actual backend URL
-      const response = await axios.get(`/api/calendar/view/${user.id}/${year}/${month}`)
-      console.log('Calendar data received:', response.data); // Debug log
+      // DEBUGGING: Log the API call we're about to make
+      console.log('Fetching calendar data for:', {
+        userEmail: user.email,
+        year,
+        month,
+        userId: user.id
+      })
+      
+      // Call the calendar API
+      const response = await axios.get(`/api/calendar/view/${user.email}/${year}/${month}`)
+      console.log('Calendar API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        dataType: typeof response.data,
+        isHTML: typeof response.data === 'string' && response.data.startsWith('<')
+      })
+      
+      // Validate response is JSON
+      if (typeof response.data === 'string' && response.data.startsWith('<')) {
+        throw new Error(`Received HTML instead of JSON. Status: ${response.status}. This indicates the API endpoint may not exist or server is misconfigured.`)
+      }
+      
       setCalendarData(response.data)
       setError(null)
     } catch (err) {
       console.error('Error fetching calendar data:', err)
-      setError('Failed to load calendar data')
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to load calendar data'
+      if (err.response) {
+        if (err.response.status === 404) {
+          errorMessage = `Calendar API not found: ${err.response.config?.method?.toUpperCase()} ${err.response.config?.url}`
+        } else if (err.response.status >= 500) {
+          errorMessage = 'Calendar service error. Please check backend server.'
+        } else {
+          errorMessage = `Calendar API error: ${err.response.status}`
+        }
+      } else if (err.request) {
+        errorMessage = 'Cannot connect to calendar service. Is the backend running?'
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -122,34 +159,34 @@ const CalendarPage = ({ user }) => {
     ]
     
     return (
-      <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-6">
+      <button
+        onClick={goToPreviousMonth}
+        className="p-2 rounded-lg bg-gray-800 text-green-400 hover:bg-gray-700 transition-colors border border-gray-600"
+      >
+        {'<'} Prev
+      </button>
+      
+      <h2 className="text-2xl font-bold text-green-400">
+        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+      </h2>
+      
+      <div className="flex space-x-2">
         <button
-          onClick={goToPreviousMonth}
-          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+          onClick={goToToday}
+          className="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600 transition-colors"
         >
-          {'<'} Prev
+          Today
         </button>
-        
-        <h2 className="text-2xl font-bold text-gray-800">
-          {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-        </h2>
-        
-        <div className="flex space-x-2">
-          <button 
-            onClick={goToToday}
-            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-          >
-            Today
-          </button>
-          <button
-            onClick={goToNextMonth}
-            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            Next {'>'}
-          </button>
-        </div>
+        <button
+          onClick={goToNextMonth}
+          className="p-2 rounded-lg bg-gray-800 text-green-400 hover:bg-gray-700 transition-colors border border-gray-600"
+        >
+          Next {'>'}
+        </button>
       </div>
-    )
+    </div>
+  )
   }
 
   // Render day names
@@ -157,30 +194,47 @@ const CalendarPage = ({ user }) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     
     return (
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {days.map(day => (
-          <div key={day} className="text-center font-medium text-gray-600 py-2">
-            {day}
-          </div>
-        ))}
-      </div>
-    )
+    <div className="grid grid-cols-7 gap-1 mb-2">
+      {days.map(day => (
+        <div key={day} className="text-center font-medium text-green-500 py-2">
+          {day}
+        </div>
+      ))}
+    </div>
+  )
   }
 
   // Render calendar days
   const renderCalendarDays = () => {
     if (!calendarData) return null
     
-    // Additional safety check for diary_entries
-    if (!calendarData.diary_entries || typeof calendarData.diary_entries !== 'object') {
-      console.warn('Invalid diary_entries structure:', calendarData.diary_entries);
+    // Enhanced safety check for diary_entries structure
+    if (!calendarData.diary_entries) {
+      console.warn('Calendar data missing diary_entries field:', {
+        calendarDataKeys: Object.keys(calendarData || {}),
+        calendarDataType: typeof calendarData,
+        diaryEntriesType: typeof calendarData?.diary_entries
+      });
+      
+      // Show error state but still render empty calendar
       return (
-        <div className="grid grid-cols-7 gap-1">
-          {Array(42).fill(0).map((_, i) => (
-            <div key={i} className="min-h-24 p-2 border rounded-lg bg-gray-50 border-gray-100 text-gray-400">
-              <div className="font-medium">&nbsp;</div>
-            </div>
-          ))}
+        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+          Calendar data structure invalid. Please refresh the page.
+        </div>
+      );
+    }
+    
+    if (typeof calendarData.diary_entries !== 'object') {
+      console.warn('Invalid diary_entries structure:', {
+        diary_entries: calendarData.diary_entries,
+        diary_entries_type: typeof calendarData.diary_entries,
+        calendarData: calendarData
+      });
+      
+      // Still render the calendar but show warning
+      return (
+        <div className="mb-4 p-3 bg-yellow-50 text-yellow-700 rounded-lg">
+          Warning: Diary entries data structure is invalid.
         </div>
       );
     }
@@ -222,15 +276,15 @@ const CalendarPage = ({ user }) => {
             }
           }}
           className={`min-h-24 p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-            isCurrentMonth
-              ? 'bg-white border-gray-200'
-              : 'bg-gray-50 border-gray-100 text-gray-400'
-          } ${
-            // Highlight today
-            dateStr === new Date().toISOString().split('T')[0]
-              ? 'ring-2 ring-green-500'
-              : ''
-          }`}
+          isCurrentMonth
+            ? 'bg-gray-800 border-gray-700 text-green-300'
+            : 'bg-gray-900 border-gray-800 text-gray-500'
+        } ${
+          // Highlight today
+          dateStr === new Date().toISOString().split('T')[0]
+            ? 'ring-2 ring-green-500'
+            : ''
+        } hover:bg-gray-700`}
         >
           <div className="font-medium">
             {currentDateObj.getDate()}
@@ -279,82 +333,83 @@ const CalendarPage = ({ user }) => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            <p className="mt-4 text-gray-600">Loading your calendar...</p>
-          </div>
+  return (
+    <div className="min-h-screen bg-black py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+          <p className="mt-4 text-green-400">Loading your calendar...</p>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-            <p className="text-gray-700 mb-6">{error}</p>
-            <button 
-              onClick={fetchCalendarData}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
+  return (
+    <div className="min-h-screen bg-black py-12">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="bg-gray-900 rounded-xl shadow-lg p-8 text-center border border-gray-700">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button
+            onClick={fetchCalendarData}
+            className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Mental Health Calendar</h1>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-
-        {/* Stats and Quote Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2">
-            {renderStreakVisualization()}
-          </div>
-          <div className="lg:col-span-1">
-            {renderDailyQuote()}
-          </div>
-        </div>
-
-        {/* Calendar Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
-          {renderHeader()}
-          {renderDayNames()}
-          {renderCalendarDays()}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => handleCreateEntry(new Date().toISOString().split('T')[0])}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg"
-          >
-            Add Today's Diary Entry
-          </button>
-        </div>
+  <div className="min-h-screen bg-black py-12">
+    <div className="max-w-6xl mx-auto px-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-green-400">Mental Health Calendar</h1>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-4 py-2 bg-green-800 text-green-200 rounded-lg hover:bg-green-700 transition-colors"
+        >
+          Back to Dashboard
+        </button>
       </div>
+
+      {/* Calendar Section */}
+      <div className="bg-gray-900 rounded-2xl shadow-xl p-6 mb-8">
+        {renderHeader()}
+        {renderDayNames()}
+        {renderCalendarDays()}
+      </div>
+
+      {/* Quote Section - Full Width Rectangle */}
+      <div className="mb-8">
+        {renderDailyQuote()}
+      </div>
+
+      {/* Streak Visualization - Moved to Bottom */}
+      <div className="mb-8">
+        {renderStreakVisualization()}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mt-8 text-center">
+        <button
+          onClick={() => handleCreateEntry(new Date().toISOString().split('T')[0])}
+          className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg"
+        >
+          Add Today's Diary Entry
+        </button>
+      </div>
+    </div>
       
       {/* Diary Entry Modal */}
       <DiaryEntryModal
         userId={user.id}
+        userEmail={user.email}
         date={selectedDate}
         entry={selectedEntry}
         isOpen={isModalOpen}

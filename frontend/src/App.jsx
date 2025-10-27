@@ -7,7 +7,6 @@ import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
-import CalendarPage from './pages/CalendarPage'
 
 function App() {
   const { user } = useAuth()
@@ -18,7 +17,6 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <div>Please log in</div>} />
-      <Route path="/calendar" element={user ? <CalendarPage user={user} /> : <div>Please log in</div>} />
     </Routes>
   )
 }

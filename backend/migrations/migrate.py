@@ -59,11 +59,23 @@ MIGRATIONS = [
         ]
     },
     {
-        'version': '003_add_diary_tags',
-        'description': 'Add tags column to diary table for categorization',
-        'upgrade': lambda: db.session.execute(text("ALTER TABLE diary ADD COLUMN IF NOT EXISTS tags TEXT;")),
-        'downgrade': lambda: db.session.execute(text("ALTER TABLE diary DROP COLUMN IF EXISTS tags;"))
-    }
+       'version': '003_add_diary_tags',
+       'description': 'Add tags column to diary table for categorization',
+       'upgrade': lambda: db.session.execute(text("ALTER TABLE diary ADD COLUMN IF NOT EXISTS tags TEXT;")),
+       'downgrade': lambda: db.session.execute(text("ALTER TABLE diary DROP COLUMN IF EXISTS tags;"))
+   },
+   {
+      'version': '004_add_diary_is_completed',
+      'description': 'Add is_completed column to diary table for streak tracking',
+      'upgrade': lambda: db.session.execute(text("ALTER TABLE diary ADD COLUMN IF NOT EXISTS is_completed BOOLEAN DEFAULT FALSE NOT NULL;")),
+      'downgrade': lambda: db.session.execute(text("ALTER TABLE diary DROP COLUMN IF EXISTS is_completed;"))
+  },
+  {
+      'version': '005_add_diary_updated_at',
+      'description': 'Add updated_at column to diary table',
+      'upgrade': lambda: db.session.execute(text("ALTER TABLE diary ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;")),
+      'downgrade': lambda: db.session.execute(text("ALTER TABLE diary DROP COLUMN IF EXISTS updated_at;"))
+  }
 ]
 
 def get_applied_migrations():
