@@ -16,8 +16,14 @@ def create_app():
     # Import and register blueprints here
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
+    from app.routes.quote import quote_bp
+    from app.routes.diary import diary_bp
+    from app.routes.calendar import calendar_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(quote_bp)
+    app.register_blueprint(diary_bp)
+    app.register_blueprint(calendar_bp)
     
     @app.route('/')
     def hello():

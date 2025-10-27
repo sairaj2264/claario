@@ -9,7 +9,7 @@ const CalendarPage = ({ user }) => {
   // Check if user is valid
   if (!user || !user.id) {
   return (
-    <div className="min-h-screen bg-black py-12">
+    <div className="min-h-screen bg-black py-8 pt-24">
       <div className="max-w-6xl mx-auto px-4">
         <div className="bg-gray-900 rounded-xl shadow-lg p-8 text-center border border-gray-700">
           <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
@@ -333,50 +333,40 @@ const CalendarPage = ({ user }) => {
   }
 
   if (loading) {
-  return (
-    <div className="min-h-screen bg-black py-12">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-          <p className="mt-4 text-green-400">Loading your calendar...</p>
-        </div>
+return (
+  <div className="min-h-screen bg-black py-8 pt-24">
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <p className="mt-4 text-green-400">Loading your calendar...</p>
       </div>
     </div>
-  )
+  </div>
+)
 }
 
   if (error) {
-  return (
-    <div className="min-h-screen bg-black py-12">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="bg-gray-900 rounded-xl shadow-lg p-8 text-center border border-gray-700">
-          <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
-          <p className="text-gray-300 mb-6">{error}</p>
-          <button
-            onClick={fetchCalendarData}
-            className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
+return (
+  <div className="min-h-screen bg-black py-8 pt-24">
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="bg-gray-900 rounded-xl shadow-lg p-8 text-center border border-gray-700">
+        <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
+        <p className="text-gray-300 mb-6">{error}</p>
+        <button
+          onClick={fetchCalendarData}
+          className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors"
+        >
+          Try Again
+        </button>
       </div>
     </div>
-  )
+  </div>
+)
 }
 
   return (
-  <div className="min-h-screen bg-black py-12">
-    <div className="max-w-6xl mx-auto px-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-green-400">Mental Health Calendar</h1>
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="px-4 py-2 bg-green-800 text-green-200 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Back to Dashboard
-        </button>
-      </div>
+<div className="min-h-screen bg-black py-8 pt-24">
+  <div className="max-w-6xl mx-auto px-4">
 
       {/* Calendar Section */}
       <div className="bg-gray-900 rounded-2xl shadow-xl p-6 mb-8">
@@ -399,7 +389,7 @@ const CalendarPage = ({ user }) => {
       <div className="mt-8 text-center">
         <button
           onClick={() => handleCreateEntry(new Date().toISOString().split('T')[0])}
-          className="px-6 py-3 bg-green-700 text-white rounded-lg hover:bg-green-600 transition-colors shadow-lg"
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors shadow-lg"
         >
           Add Today's Diary Entry
         </button>

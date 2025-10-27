@@ -11,28 +11,7 @@ const Dashboard = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Mental Health Support
-              </h1>
-              <p className="text-lg text-gray-600">
-                Welcome back, {user?.user_metadata?.full_name || user?.email || 'User'}!
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white rounded-lg py-2 px-4 hover:bg-red-700 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-16">
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -63,6 +42,7 @@ const Dashboard = ({ user }) => {
                 {/* Calendar/Diary */}
                 <div className="group">
                   <button
+                    onClick={() => navigate('/calendar')}
                     className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-xl p-6 transition-all duration-300 transform hover:scale-105 shadow-lg"
                   >
                     <div className="text-center">
