@@ -114,7 +114,14 @@ const ChatPage = () => {
     
     // Handle new messages
     socket.on('new_message', (message) => {
-      setMessages(prev => [...prev, message]);
+      setMessages(prev => {
+        // Check if message already exists to prevent duplicates
+        const exists = prev.some(msg => msg.id === message.id);
+        if (!exists) {
+          return [...prev, message];
+        }
+        return prev;
+      });
       if (message.id > lastMessageId) {
         setLastMessageId(message.id);
       }

@@ -111,38 +111,31 @@ def handle_send_message(data):
     
     group_id = chat_service.user_sessions[user_session_id]
     
-    # Moderate content
-    moderation_result = content_moderation_service.moderate_content(content)
-    
-    # If content is inappropriate, flag the user
-    if not moderation_result['is_appropriate']:
-        chat_service.flag_user(user_session_id, ', '.join(moderation_result['violations']))
-    
-    # Censor content before sending
-    censored_content, violations = content_moderation_service.censor_content(content)
-    
-    # Generate username for this message
-    username = chat_service.generate_random_username()
-    
-    # Create message object
-    message_data = {
-        'user_session_id': user_session_id,
-        'username': username,
-        'content': censored_content,
-        'timestamp': datetime.utcnow().isoformat(),
-        'was_flagged': not moderation_result['is_appropriate'],
-        'violations': violations
-    }
-    
-    # Broadcast message to the group
-    emit('new_message', message_data, to=str(group_id))
-    
-    # Save message to database
+    # Save message to database first
     try:
         result = chat_service.send_message(user_session_id, content)
-        # We don't need to do anything special here since send_message already saves to DB
+        if not result['success']:
+            emit('error', {'message': result.get('error', 'Failed to send message')})
+            return
+            
+        message = result['message']
+        
+        # Create message object for broadcasting (using the saved message data)
+        message_data = {
+            'id': message['id'],
+            'user_session_id': user_session_id,
+            'username': message['username'],
+            'content': message['content'],
+            'created_at': message['created_at'],
+            'flagged': message.get('flagged', False)
+        }
+        
+        # Broadcast message to the group
+        emit('new_message', message_data, to=str(group_id))
+        
     except Exception as e:
-        print(f"Error saving message to database: {e}")
+        print(f"Error processing message: {e}")
+        emit('error', {'message': 'Failed to process message'})
 
 @socketio.on('typing')
 def handle_typing(data):
