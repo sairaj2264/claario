@@ -4,6 +4,7 @@ import axios from 'axios'
 import StreakVisualization from '../components/StreakVisualization'
 import DailyQuote from '../components/DailyQuote'
 import DiaryEntryModal from '../components/DiaryEntryModal'
+import DatePopup from '../components/DatePopup'
 
 const CalendarPage = ({ user }) => {
   // Check if user is valid
@@ -33,6 +34,10 @@ const CalendarPage = ({ user }) => {
   const [error, setError] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState(null)
+  const [isDatePopupOpen, setIsDatePopupOpen] = useState(false)
+  const [popupDate, setPopupDate] = useState(null)
+  const [popupEntry, setPopupEntry] = useState(null)
+  const [canEditDate, setCanEditDate] = useState(false)
   const [selectedEntry, setSelectedEntry] = useState(null)
 
   // Fetch calendar data when the component mounts or when the month changes
@@ -117,6 +122,41 @@ const CalendarPage = ({ user }) => {
     setIsModalOpen(true)
   }
   
+  // Handle opening the date popup
+  const handleDateClick = (date, entry) => {
+    // Only allow creating/editing for today and past 2 days
+    const today = new Date()
+    const dateToCheck = new Date(date)
+    const diffTime = today - dateToCheck
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays >= 0 && diffDays <= 2) {
+      setPopupDate(date)
+      setPopupEntry(entry)
+      setCanEditDate(true)
+      setIsDatePopupOpen(true)
+    }
+  }
+  
+  // Handle closing the date popup
+  const handleCloseDatePopup = () => {
+    setIsDatePopupOpen(false)
+    setPopupDate(null)
+    setPopupEntry(null)
+    setCanEditDate(false)
+  }
+  
+  // Handle add entry from date popup
+  const handleAddFromPopup = () => {
+    handleCloseDatePopup()
+    handleCreateEntry(popupDate)
+  }
+  
+  // Handle edit entry from date popup
+  const handleEditFromPopup = () => {
+    handleCloseDatePopup()
+    handleEditEntry(popupDate, popupEntry)
+  }
   // Handle closing the modal
   const handleCloseModal = () => {
     setIsModalOpen(false)
@@ -260,21 +300,7 @@ const CalendarPage = ({ user }) => {
       days.push(
         <div
           key={dateStr}
-          onClick={() => {
-            // Only allow creating/editing for today and past 2 days
-            const today = new Date()
-            const dateToCheck = new Date(currentDateObj)
-            const diffTime = today - dateToCheck
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-            
-            if (diffDays >= 0 && diffDays <= 2) {
-              if (diaryEntry) {
-                handleEditEntry(dateStr, diaryEntry)
-              } else {
-                handleCreateEntry(dateStr)
-              }
-            }
-          }}
+          onClick={() => handleDateClick(dateStr, diaryEntry)}
           className={`min-h-24 p-2 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
           isCurrentMonth
             ? 'bg-gray-800 border-gray-700 text-green-300'
@@ -379,6 +405,16 @@ return (
       <div className="mb-8">
         {renderDailyQuote()}
       </div>
+      {/* Date Popup */}
+      <DatePopup
+        date={popupDate}
+        entry={popupEntry}
+        isOpen={isDatePopupOpen}
+        onAdd={handleAddFromPopup}
+        onEdit={handleEditFromPopup}
+        onClose={handleCloseDatePopup}
+        canEdit={canEditDate}
+      />
 
       {/* Streak Visualization - Moved to Bottom */}
       <div className="mb-8">

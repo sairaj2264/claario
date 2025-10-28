@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import AuthService from '../services/authService'
+import logo from '../assets/Claario_NavBar_Logo-removebg-preview.png'
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -23,13 +24,14 @@ const Navbar = () => {
     <nav className="bg-gray-900 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo Placeholder */}
+          {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 flex items-center justify-center text-xl font-bold text-gray-700">
-                MHS
-              </div>
-              <span className="ml-3 text-xl font-bold text-green-400">Mental Health Support</span>
+              <img
+                src={logo}
+                alt="Mental Health Support Logo"
+                className="h-12 w-auto"
+              />
             </div>
           </div>
 
