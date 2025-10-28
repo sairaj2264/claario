@@ -4,7 +4,6 @@ import { useAuth } from './hooks/useAuth'
 import Navbar from './components/Navbar'
 
 // Page components
-import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
@@ -19,7 +18,7 @@ function App() {
     <div className="min-h-screen bg-black">
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Dashboard user={user} />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <div>Please log in</div>} />
