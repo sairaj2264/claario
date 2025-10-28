@@ -30,6 +30,51 @@ class ChatService:
         
         return f"{adjective}{noun}{number}"
 
+    def _fill_group_from_waiting_list(self, group_id):
+        """Fill a group with available space from the waiting list."""
+        # Check if group exists and has space
+        if group_id not in self.active_groups:
+            return
+            
+        current_members = len(self.active_groups[group_id])
+        available_space = 5 - current_members
+        
+        # If group is full, nothing to do
+        if available_space <= 0:
+            return
+            
+        # Move users from waiting list to this group
+        users_to_move = min(available_space, len(self.waiting_users))
+        if users_to_move > 0:
+            moved_users = self.waiting_users[:users_to_move]
+            self.waiting_users = self.waiting_users[users_to_move:]
+            
+            # Add moved users to the group
+            self.active_groups[group_id].extend(moved_users)
+            for user_id in moved_users:
+                self.user_sessions[user_id] = group_id
+
+    def _process_waiting_list(self):
+        """Process the waiting list and fill existing groups with space."""
+        # Make a copy of waiting users to avoid modification during iteration
+        waiting_users_copy = self.waiting_users[:]
+        
+        for user_session_id in waiting_users_copy:
+            # Look for an existing group that isn't full (has less than 5 members)
+            for group_id, members in self.active_groups.items():
+                if len(members) < 5:
+                    # Found a group with space, add user to it
+                    group = ChatGroup.query.get(group_id)
+                    if group and group.is_active:
+                        # Remove user from waiting list
+                        if user_session_id in self.waiting_users:
+                            self.waiting_users.remove(user_session_id)
+                        
+                        # Add user to the group
+                        self.active_groups[group_id].append(user_session_id)
+                        self.user_sessions[user_session_id] = group_id
+                        break  # Move to next waiting user
+
     def create_or_join_group(self, user_session_id):
         """
         Create a new chat group or join an existing one.
@@ -52,39 +97,70 @@ class ChatService:
                     'username': self.generate_random_username()  # Generate new username for each session
                 }
         
-        # Try to match with waiting users first
-        if len(self.waiting_users) > 0:
-            # Add current user to waiting list
-            self.waiting_users.append(user_session_id)
-            
-            # If we have at least 2 users (for testing), create a group
-            # In production, you might want to keep this at 5
-            if len(self.waiting_users) >= 2:
-                # Take all waiting users (up to 5)
-                group_size = min(len(self.waiting_users), 5)
-                group_users = self.waiting_users[:group_size]
-                self.waiting_users = self.waiting_users[group_size:]
+        # Look for an existing group that isn't full (has less than 5 members)
+        for group_id, members in self.active_groups.items():
+            if len(members) < 5:
+                # Found a group with space, add user to it
+                group = ChatGroup.query.get(group_id)
+                if group and group.is_active:
+                    # Add user to the group
+                    self.active_groups[group_id].append(user_session_id)
+                    self.user_sessions[user_session_id] = group_id
+                    
+                    return {
+                        'group': group.to_dict(),
+                        'is_new_group': False,
+                        'members': list(self.active_groups[group_id]),
+                        'username': self.generate_random_username()
+                    }
+        
+        # No existing group with space, add user to waiting list
+        self.waiting_users.append(user_session_id)
+        
+        # Try to fill existing groups with space from waiting list
+        self._process_waiting_list()
+        
+        # Check if this user can now join a group
+        if user_session_id in self.user_sessions:
+            group_id = self.user_sessions[user_session_id]
+            group = ChatGroup.query.get(group_id)
+            if group and group.is_active:
+                # Get existing group members
+                members = []
+                if group_id in self.active_groups:
+                    members = list(self.active_groups[group_id])
                 
-                # Create new group in database
-                group = ChatGroup(max_members=5)
-                db.session.add(group)
-                db.session.commit()
-                
-                # Update in-memory tracking
-                self.active_groups[group.id] = group_users
-                for uid in group_users:
-                    self.user_sessions[uid] = group.id
-                
-                # Return group info
                 return {
                     'group': group.to_dict(),
-                    'is_new_group': True,
-                    'members': group_users,
+                    'is_new_group': False,
+                    'members': members,
                     'username': self.generate_random_username()
                 }
-        else:
-            # Add user to waiting list
-            self.waiting_users.append(user_session_id)
+        
+        # If we have at least 2 users in waiting list, create a new group
+        if len(self.waiting_users) >= 2:
+            # Take up to 5 users from waiting list
+            group_size = min(len(self.waiting_users), 5)
+            group_users = self.waiting_users[:group_size]
+            self.waiting_users = self.waiting_users[group_size:]
+            
+            # Create new group in database
+            group = ChatGroup(max_members=5)
+            db.session.add(group)
+            db.session.commit()
+            
+            # Update in-memory tracking
+            self.active_groups[group.id] = group_users
+            for uid in group_users:
+                self.user_sessions[uid] = group.id
+            
+            # Return group info
+            return {
+                'group': group.to_dict(),
+                'is_new_group': True,
+                'members': group_users,
+                'username': self.generate_random_username()
+            }
         
         # If we couldn't form a group, return waiting status
         return {
@@ -111,6 +187,9 @@ class ChatService:
                         if group:
                             group.is_active = False
                             db.session.commit()
+                    else:
+                        # If group now has space, check if we can move users from waiting list
+                        self._fill_group_from_waiting_list(group_id)
             
             # Remove user from sessions
             del self.user_sessions[user_session_id]

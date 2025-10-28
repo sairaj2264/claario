@@ -57,12 +57,12 @@ def handle_join_chat(data):
         })
         
         # Notify others in the group about the new user
-        if not result.get('is_new_group'):
-            emit('user_joined', {
-                'username': result.get('username'),
-                'user_session_id': user_session_id,
-                'message': f"{result.get('username')} joined the chat"
-            }, to=str(group['id']))
+        # Always notify when a user joins (whether new group or existing group)
+        emit('user_joined', {
+            'username': result.get('username'),
+            'user_session_id': user_session_id,
+            'message': f"{result.get('username')} joined the chat"
+        }, to=str(group['id']))
         
         # Send recent messages to the user
         messages = chat_service.get_group_messages(group['id'])
