@@ -63,7 +63,7 @@ const LoginPage = () => {
 
   const sendUserToBackend = async (user) => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/callback', {
+      const response = await fetch('/api/auth/callback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

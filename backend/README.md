@@ -34,7 +34,7 @@ To start the Flask development server:
 python app.py
 ```
 
-The server will start on `http://localhost:3001` by default.
+The server will start on `http://localhost:3000` by default.
 
 ## Project Structure
 

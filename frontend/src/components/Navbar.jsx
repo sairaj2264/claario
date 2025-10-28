@@ -18,6 +18,8 @@ const Navbar = () => {
     { name: 'Home', path: '/' },
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Calendar', path: '/calendar' },
+    { name: 'Chat', path: '/chat' },
+    { name: 'Admin', path: '/admin/chat' },
   ]
 
   return (

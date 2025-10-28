@@ -16,7 +16,7 @@ async function loginWithOAuth(provider) {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider, // 'google', 'github', etc.
       options: {
-        redirectTo: 'http://localhost:3001/api/auth/callback' // Your backend callback URL
+        redirectTo: 'http://localhost:3000/api/auth/callback' // Your backend callback URL
       }
     })
 
@@ -47,7 +47,7 @@ async function handleOAuthCallback() {
     
     if (session) {
       // Send the access token to your backend
-      const response = await fetch('http://localhost:3001/api/auth/callback', {
+      const response = await fetch('http://localhost:3000/api/auth/callback', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

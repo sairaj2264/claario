@@ -61,7 +61,7 @@ cd backend
 python app.py
 ```
 
-The backend will be available at `http://localhost:3001` by default.
+The backend will be available at `http://localhost:3000` by default.
 
 ## Frontend Deployment
 

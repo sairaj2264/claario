@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_cors import CORS
+from app import socketio
 from app.config import Config
 from app.models import db
 
@@ -11,6 +12,9 @@ def create_app():
     # Initialize database
     db.init_app(app)
     
+    # Initialize SocketIO with app
+    socketio.init_app(app)
+    
     # Enable CORS for all routes
     CORS(app)
     
@@ -20,11 +24,16 @@ def create_app():
     from app.routes.quote import quote_bp
     from app.routes.diary import diary_bp
     from app.routes.calendar import calendar_bp
+    from app.routes.chat import chat_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(quote_bp)
     app.register_blueprint(diary_bp)
     app.register_blueprint(calendar_bp)
+    app.register_blueprint(chat_bp)
+    
+    # Import socket events to register them
+    from app import socket_events
     
     @app.route('/')
     def hello():
@@ -41,4 +50,5 @@ if __name__ == '__main__':
     with app.app_context():
         # Create tables if they don't exist
         db.create_all()
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 3001)), debug=True)
+    # Use socketio.run instead of app.run for WebSocket support
+    socketio.run(app, host='localhost', port=3000, debug=True)

@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard'
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
 import CalendarPage from './pages/CalendarPage'
+import ChatPage from './pages/ChatPage'
+import AdminChatPage from './pages/AdminChatPage'
 
 function App() {
   const { user } = useAuth()
@@ -22,6 +24,8 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={user ? <Dashboard user={user} /> : <div>Please log in</div>} />
         <Route path="/calendar" element={user ? <CalendarPage user={user} /> : <div>Please log in</div>} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/admin/chat" element={<AdminChatPage />} />
       </Routes>
     </div>
   )

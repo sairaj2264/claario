@@ -78,7 +78,7 @@ The following environment variables are required in the `.env` file:
 
 ## Backend Integration
 
-The frontend communicates with the backend at `http://localhost:3001` for:
+The frontend communicates with the backend at `http://localhost:3000` for:
 - Sending user authentication data after OAuth
 - Storing user information in the database
 - Accessing protected API endpoints

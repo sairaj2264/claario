@@ -99,4 +99,4 @@ The application is designed as a full-stack solution with:
 ## Ports
 
 - Frontend development server: `http://localhost:5173`
-- Backend API server: `http://localhost:3001`
+- Backend API server: `http://localhost:3000`
