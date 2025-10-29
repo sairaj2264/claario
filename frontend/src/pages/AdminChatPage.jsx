@@ -10,9 +10,21 @@ const AdminChatPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is admin
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    if (!isAdmin) {
+      navigate('/login');
+      return;
+    }
+    
     fetchFlaggedUsers();
     fetchBannedUsers();
-  }, []);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin');
+    navigate('/login');
+  };
 
   const fetchFlaggedUsers = async () => {
     try {
@@ -92,7 +104,7 @@ const AdminChatPage = () => {
           <div className="bg-red-900 border border-red-700 rounded-lg p-6 mt-8">
             <h1 className="text-2xl font-bold mb-4">Error</h1>
             <p className="mb-4">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition"
             >
@@ -109,8 +121,18 @@ const AdminChatPage = () => {
       <div className="max-w-6xl mx-auto p-4">
         {/* Header */}
         <div className="bg-gray-800 rounded-lg p-4 mb-6">
-          <h1 className="text-3xl font-bold">Chat Administration</h1>
-          <p className="text-gray-400">Monitor flagged users and manage bans</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Chat Administration</h1>
+              <p className="text-gray-400">Monitor flagged users and manage bans</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition text-sm"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -149,18 +171,18 @@ const AdminChatPage = () => {
                       <td className="px-4 py-3 text-sm font-mono">{user.user_session_id.substring(0, 8)}...</td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs ${
-                          user.flag_count >= 3 
-                            ? 'bg-red-900 text-red-100' 
-                            : user.flag_count >= 2 
-                            ? 'bg-yellow-900 text-yellow-100' 
+                          user.flag_count >= 3
+                            ? 'bg-red-900 text-red-100'
+                            : user.flag_count >= 2
+                            ? 'bg-yellow-900 text-yellow-100'
                             : 'bg-orange-900 text-orange-100'
                         }`}>
                           {user.flag_count} flag{user.flag_count !== 1 ? 's' : ''}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-400">
-                        {user.last_flagged_at 
-                          ? new Date(user.last_flagged_at).toLocaleDateString() 
+                        {user.last_flagged_at
+                          ? new Date(user.last_flagged_at).toLocaleDateString()
                           : 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -199,8 +221,8 @@ const AdminChatPage = () => {
                     <tr key={user.id}>
                       <td className="px-4 py-3 text-sm font-mono">{user.user_session_id.substring(0, 8)}...</td>
                       <td className="px-4 py-3 text-sm text-gray-400">
-                        {user.banned_at 
-                          ? new Date(user.banned_at).toLocaleDateString() 
+                        {user.banned_at
+                          ? new Date(user.banned_at).toLocaleDateString()
                           : 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-sm max-w-xs truncate">{user.reason || 'Policy violation'}</td>

@@ -4,6 +4,7 @@ from datetime import datetime
 from app import socketio
 from app.services.chat_service import chat_service
 from app.services.content_moderation_service import content_moderation_service
+from app.services.therapy_service import therapy_service
 
 @socketio.on('connect')
 def handle_connect():
@@ -16,7 +17,7 @@ def handle_disconnect():
     """Handle WebSocket disconnections."""
     print(f'Client disconnected: {request.environ["REMOTE_ADDR"]}')
     
-    # Remove user from any chat groups they might be in
+    # Clean up therapy session connections
     # Note: We don't have access to user_session_id here, so we'll need to handle this differently
     # In a real implementation, you might want to store the mapping between request.sid and user_session_id
 
@@ -160,3 +161,96 @@ def handle_typing(data):
 
 # Import this module in app.py to register the events
 # Add this to app.py: from app import socket_events
+
+# Keep track of connected users per session
+therapy_session_connections = {}
+
+# Therapy session events
+@socketio.on('join_therapy_session')
+def handle_join_therapy_session(data):
+    """Handle therapist or user joining a therapy session"""
+    session_id = data.get('session_id')
+    user_id = data.get('user_id')
+    
+    if not session_id or not user_id:
+        emit('error', {'message': 'Session ID and user ID are required'})
+        return
+    
+    # Initialize the session connections tracking if not exists
+    if session_id not in therapy_session_connections:
+        therapy_session_connections[session_id] = set()
+    
+    # Add user to the session connections
+    therapy_session_connections[session_id].add(user_id)
+    
+    # Join the SocketIO room for this therapy session
+    join_room(f"therapy_{session_id}")
+    
+    # Check if we should start the session (when both user and therapist have joined)
+    from app.services.therapy_service import therapy_service
+    session_info = therapy_service.get_user_sessions(session_id)
+    
+    if session_info and len(session_info) > 0:
+        session = session_info[0]
+        # If session is accepted and both user and therapist have joined, start the session
+        if session['status'] == 'accepted' and len(therapy_session_connections[session_id]) >= 2:
+            print(f"Both user and therapist have joined session {session_id}, starting session")
+            started_session = therapy_service.start_session(session_id)
+            if started_session:
+                # Notify all in the session that it has started
+                emit('therapy_session_started', {
+                    'session': started_session
+                }, to=f"therapy_{session_id}")
+    
+    # Notify others in the session
+    emit('user_joined_therapy', {
+        'user_id': user_id,
+        'message': f"User {user_id} joined the therapy session"
+    }, to=f"therapy_{session_id}")
+
+@socketio.on('send_therapy_message')
+def handle_send_therapy_message(data):
+    """Handle sending a therapy session message"""
+    session_id = data.get('session_id')
+    sender_id = data.get('sender_id')
+    sender_type = data.get('sender_type')  # 'user' or 'therapist'
+    content = data.get('content')
+    
+    if not all([session_id, sender_id, sender_type, content]):
+        emit('error', {'message': 'Session ID, sender ID, sender type, and content are required'})
+        return
+    
+    try:
+        # Save message to database
+        message = therapy_service.send_message(session_id, sender_id, sender_type, content)
+        
+        # Broadcast message to the therapy session room
+        emit('new_therapy_message', message, to=f"therapy_{session_id}")
+    except Exception as e:
+        emit('error', {'message': f'Failed to send message: {str(e)}'})
+
+@socketio.on('leave_therapy_session')
+def handle_leave_therapy_session(data):
+    """Handle user or therapist leaving a therapy session"""
+    session_id = data.get('session_id')
+    user_id = data.get('user_id')
+    
+    if not session_id or not user_id:
+        emit('error', {'message': 'Session ID and user ID are required'})
+        return
+    
+    # Remove user from the session connections
+    if session_id in therapy_session_connections and user_id in therapy_session_connections[session_id]:
+        therapy_session_connections[session_id].remove(user_id)
+        # Clean up the set if it's empty
+        if not therapy_session_connections[session_id]:
+            del therapy_session_connections[session_id]
+    
+    # Leave the SocketIO room for this therapy session
+    leave_room(f"therapy_{session_id}")
+    
+    # Notify others in the session
+    emit('user_left_therapy', {
+        'user_id': user_id,
+        'message': f"User {user_id} left the therapy session"
+    }, to=f"therapy_{session_id}")

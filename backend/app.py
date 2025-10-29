@@ -25,12 +25,14 @@ def create_app():
     from app.routes.diary import diary_bp
     from app.routes.calendar import calendar_bp
     from app.routes.chat import chat_bp
+    from app.routes.therapy import therapy_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(quote_bp)
     app.register_blueprint(diary_bp)
     app.register_blueprint(calendar_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(therapy_bp)
     
     # Import socket events to register them
     from app import socket_events

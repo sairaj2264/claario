@@ -8,18 +8,38 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
+  const isAdmin = localStorage.getItem('isAdmin') === 'true'
+  const isTherapist = localStorage.getItem('isTherapist') === 'true'
 
   const handleLogout = async () => {
     await AuthService.logout()
+    localStorage.removeItem('isAdmin')
+    localStorage.removeItem('isTherapist')
     navigate('/')
   }
 
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Calendar', path: '/calendar' },
-    { name: 'Chat', path: '/chat' },
-    { name: 'Admin', path: '/admin/chat' },
-  ]
+  // Define navigation items based on user type
+  let navItems = []
+  
+  if (isAdmin) {
+    // Admin only sees admin panel
+    navItems = [
+      { name: 'Admin Panel', path: '/admin/chat' },
+    ]
+  } else if (isTherapist) {
+    // Therapists see therapist dashboard
+    navItems = [
+      { name: 'Therapist Dashboard', path: '/therapist/dashboard' },
+    ]
+  } else if (user) {
+    // Regular users see these items
+    navItems = [
+      { name: 'Dashboard', path: '/dashboard' },
+      { name: 'Calendar', path: '/calendar' },
+      { name: 'Chat', path: '/chat' },
+    ]
+  }
+  // Unauthenticated users see no navigation items
 
   return (
     <nav className="bg-gray-900 border-b border-gray-700">
@@ -55,14 +75,14 @@ const Navbar = () => {
 
           {/* User Menu */}
           <div className="flex items-center">
-            {user ? (
+            {(user || isAdmin || isTherapist) ? (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center">
                   <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-700">
-                    {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                    {isAdmin ? 'A' : isTherapist ? 'T' : user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
                   </div>
                   <span className="ml-2 text-sm text-gray-300 hidden md:block">
-                    {user?.user_metadata?.full_name || user?.email || 'User'}
+                    {isAdmin ? 'Administrator' : isTherapist ? 'Therapist' : user?.user_metadata?.full_name || user?.email || 'User'}
                   </span>
                 </div>
                 <button

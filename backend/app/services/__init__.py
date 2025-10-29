@@ -5,3 +5,4 @@ from app.services.diary_service import DiaryService
 from app.services.calendar_service import CalendarService
 from app.services.content_moderation_service import content_moderation_service
 from app.services.chat_service import chat_service
+from app.services.therapy_service import therapy_service

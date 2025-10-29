@@ -1,13 +1,82 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthService from '../services/authService'
 
 const Dashboard = ({ user }) => {
+  const [therapySession, setTherapySession] = useState(null)
+  const [userSessionId, setUserSessionId] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(false)
   const navigate = useNavigate()
 
+  
+  // Check for therapy session status
+  useEffect(() => {
+    const checkTherapySessionStatus = async () => {
+      if (!user) return
+      
+      try {
+        setCheckingSession(true)
+        const response = await fetch(`/api/therapy/user/${userSessionId || user?.id || 'anonymous'}`)
+        const data = await response.json()
+        
+        if (data.success && data.sessions && data.sessions.length > 0) {
+          // Find the most recent session
+          const latestSession = data.sessions.reduce((latest, current) => {
+            const latestDate = new Date(latest.created_at)
+            const currentDate = new Date(current.created_at)
+            return currentDate > latestDate ? current : latest
+          })
+          
+          setTherapySession(latestSession)
+        }
+      } catch (error) {
+        console.error('Error checking therapy session status:', error)
+      } finally {
+        setCheckingSession(false)
+      }
+    }
+    
+    // Check immediately on load
+    checkTherapySessionStatus()
+    
+    // Poll for session status every 5 seconds
+    const interval = setInterval(checkTherapySessionStatus, 5000)
+    
+    return () => clearInterval(interval)
+  }, [user, userSessionId, navigate])
   const handleLogout = async () => {
     await AuthService.logout()
     navigate('/')
+  }
+
+  const handleTherapyRequest = async () => {
+    try {
+      // Create therapy session request
+      const response = await fetch('/api/therapy/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_session_id: user?.id || 'anonymous',
+          user_email: user?.email || 'anonymous@example.com'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Therapy session request submitted successfully!');
+        // Store the session and user session ID in state
+        setTherapySession(data.session);
+        setUserSessionId(user?.id || 'anonymous');
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error requesting therapy session:', error);
+      alert('Failed to submit therapy session request');
+    }
   }
 
   return (
@@ -57,7 +126,8 @@ const Dashboard = ({ user }) => {
                 {/* Mental Therapy Request */}
                 <div className="group md:col-span-2">
                   <button
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl p-6 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-500 opacity-70 cursor-not-allowed"
+                    onClick={() => handleTherapyRequest()}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl p-6 transition-all duration-300 transform hover:scale-105 shadow-lg border border-blue-500"
                   >
                     <div className="text-center">
                       <div className="text-4xl mb-3">🧠</div>
@@ -69,6 +139,26 @@ const Dashboard = ({ user }) => {
                   </button>
                 </div>
               </div>
+              
+              {/* Active Therapy Session Notification */}
+              {therapySession && (therapySession.status === 'accepted' || therapySession.status === 'in_progress') && (
+                <div className="mt-6 bg-blue-900 border border-blue-700 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h5 className="font-medium text-blue-300 mb-1">Active Therapy Session</h5>
+                      <p className="text-blue-100 text-sm">
+                        You have an active therapy session. Click below to join.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/therapy/chat/${therapySession.id}`)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Join Session
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
